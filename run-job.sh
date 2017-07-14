@@ -25,6 +25,9 @@ if [ -z "${USER_COMMANDS}" ]; then echo "USER_COMMANDS must be non-blank" && exi
 set -e
 set -x
 
+# we'll overwrite later if there's a patch
+JOB_DESCRIPTION="${GIT_REF} w/ ${JDK_TAG}"
+
 # This dir has to be writable by the in-container jenkins user
 # which should already be handled as long as the current effective user is the same
 # as the effective user that ran build-docker-image.sh (see vars in that script)
@@ -42,6 +45,7 @@ if  [ -f ./CUSTOM_PATCH ]; then
   fi
   echo "Copying user supplied patch to workspace/custom.patch"
   cp ./CUSTOM_PATCH workspace/custom.patch
+  JOB_DESCRIPTION="${GIT_REF} + ${CUSTOM_PATCH} w/ ${JDK_TAG}"
 else
   if [ -n "${CUSTOM_PATCH}" ]; then
     echo "No ./CUSTOM_PATCH -- but env var is non-blank (${CUSTOM_PATCH}); jenkins bug?" && exit -1;
@@ -52,6 +56,7 @@ fi
 # the bash commands the user wants to run
 echo "${USER_COMMANDS}" > workspace/run-user-command.sh
 
+echo "JOB DESCRIPTION: ${JOB_DESCRIPTION}"
 docker run \
   -v $PWD/workspace:/home/jenkins \
   -u jenkins -w /home/jenkins \
