@@ -39,18 +39,15 @@ cp run-inside-docker.sh workspace/
 # optional custom patch a user may have uploaded to jenkins
 # Note: Jenkins uses the same string for the file name, and the ENV var,
 # so we're requiring CUSTOM_PATCH (instead of custom.patch) so bash can read the ENV var
-if  [ -f ./CUSTOM_PATCH ]; then
-  if [ -z "${CUSTOM_PATCH}" ]; then
-    echo "Found ./CUSTOM_PATCH -- but env var is blank; jenkins bug?" && exit -1;
+if [ ! -z "${CUSTOM_PATCH}" ]; then
+  if  [ ! -f ./CUSTOM_PATCH ]; then
+    echo "Found ENV{CUSTOM_PATCH}=${CUSTOM_PATCH} -- but ./CUSTOM_PATCH not found, jenkins bug?" && exit -1;
   fi
   echo "Copying user supplied patch to workspace/custom.patch"
-  cp ./CUSTOM_PATCH workspace/custom.patch
+  cp ./CUSTOM_PATCH ./workspace/custom.patch
   JOB_DESCRIPTION="${GIT_REF} + ${CUSTOM_PATCH} w/ ${JDK_TAG}"
 else
-  if [ -n "${CUSTOM_PATCH}" ]; then
-    echo "No ./CUSTOM_PATCH -- but env var is non-blank (${CUSTOM_PATCH}); jenkins bug?" && exit -1;
-  fi
-  rm -f workspace/custom.patch
+  rm -f ./CUSTOM_PATCH ./workspace/custom.patch
 fi
 
 # the bash commands the user wants to run
