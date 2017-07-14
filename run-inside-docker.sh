@@ -37,7 +37,13 @@ git clean -fdx
 git reset --hard
 git fetch
 git checkout "$1"
-git merge
+if branch=$(git symbolic-ref --short -q HEAD)
+then
+  echo "on branch $branch, merging..."
+  git merge
+else
+  echo "NOTE: detached, no merge to do"
+fi
 if [ -f ../custom.patch ]
 then
   echo "Appying custom.patch..."
