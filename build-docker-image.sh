@@ -27,10 +27,10 @@ set -x
 
 mkdir -p build/docker
 
-replace '%%%JDK_TAG%%%' "${JDK_TAG}" \
-        '%%%JENKINS_UID%%%' "$(id -u)" \
-        '%%%JENKINS_GID%%%' "$(id -g)" \
-        < Dockerfile.template > build/docker/Dockerfile
+sed -e "s/%%%JDK_TAG%%%/${JDK_TAG}/g" \
+    -e "s/%%%JENKINS_UID%%%/$(id -u)/g" \
+    -e "s/%%%JENKINS_GID%%%/$(id -g)/g" \
+    < Dockerfile.template > build/docker/Dockerfile
 
 cd build/docker
 
