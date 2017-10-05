@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+This is a sample config file exported from a jenkins instance currently running jobs with this tester.
+
+Depending on your jenkins version and the plugins you have installed, you may be able to create a new
+job directly from this config.  If nothing else, comparing it to your own config may be helpful for
+troubleshooting.
+
+-->
+<project>
+  <actions/>
+  <description>&lt;p&gt;
+  This Job allows people to run arbitrary commands against arbitrary branches/commits (of Solr) 
+  using arbitrary jdks, with (optional) arbitrary patches.
+&lt;/p&gt;
+&lt;p&gt;
+  Use the "Build with Parameters" option in the left nav to see the options available 
+  to you when running a Build.  You may also use the "Rebuild" option on any past build 
+  to re-run it with the exact same parameters.
+&lt;/p&gt;
+&lt;p&gt;
+  The user who Built/Rebuilt each job will be identified in the Build Name upon build 
+  completion, and (should) recieve a PASS/FAIL email when the build is finished 
+  (assuming their jenkins user details include their correct email address)
+&lt;/p&gt;
+&lt;p&gt;
+  If the &lt;code&gt;USER_COMMANDS&lt;/code&gt; you specify when building a job include the creation of any 
+  &lt;code&gt;jenkins-archive&lt;/code&gt; directories, then any files left in those directories will be 
+  archived with the build for download later.  &lt;em&gt;(Please be considerate of disk space!)&lt;/em&gt;
+&lt;/p&gt;
+&lt;p&gt;
+  &lt;b&gt;NOTE:&lt;/b&gt; Only the Artifacts from the past &lt;b&gt;10&lt;/b&gt; builds are are saved, and for at most 
+  &lt;b&gt;7&lt;/b&gt; days.  Please be considerated of diska space and pro-actively &lt;em&gt;delete your build&lt;/em&gt; 
+  if it has large artifacts after you have downloaded them.
+&lt;/p&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>-1</numToKeep>
+        <artifactDaysToKeep>7</artifactDaysToKeep>
+        <artifactNumToKeep>10</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.25">
+      <autoRebuild>true</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>JDK_TAG</name>
+          <description>&lt;p&gt;The JDK To use for this build.&lt;/p&gt;
+
+&lt;p&gt;
+  This option will be used to pick the 
+  &lt;a href="https://hub.docker.com/_/openjdk/"&gt;Docker base image&lt;/a&gt; we extend from
+  When building our custom Docker image
+&lt;/p&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>8-jdk</string>
+              <string>9-jdk</string>
+              <string>7-jdk</string>
+              <string>6-jdk</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>GIT_REF</name>
+          <description>Specify the Git reference (branch, tag, etc...) or arbitrary SHA of the lucene-solr Git 
+repo that you want the build to "&lt;code&gt;git checkout&lt;/code&gt;" prior to running your tests.</description>
+          <defaultValue>master</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.FileParameterDefinition>
+          <name>CUSTOM_PATCH</name>
+          <description>&lt;p&gt;
+  You may &lt;em&gt;optionally&lt;/em&gt; specify a patch file that the build system will 
+  "&lt;code&gt;git apply&lt;/code&gt;" to the specified Git reference prior to running your tests.
+&lt;/p&gt;
+&lt;p&gt;
+  If Git can't apply the patch cleanly, the build will fail immediately
+&lt;/p&gt;</description>
+        </hudson.model.FileParameterDefinition>
+        <hudson.model.TextParameterDefinition>
+          <name>USER_COMMANDS</name>
+          <description>&lt;p&gt;
+  The bash commands you wish to run on the lucene-solr repo to conduct your test.
+&lt;/p&gt;
+&lt;p&gt;
+  These can be as simple as &lt;code&gt;ant test&lt;/code&gt; to run all tests in the repo, 
+  or something more complicated to beast a subset of specific tests...
+&lt;/p&gt;
+&lt;pre&gt;
+ant compile compile-test
+cd solr/core
+ant test-nocompile -Dtests.showSuccess=false -Dbeast.iters=15 -Dtests.class=\*Facet\*
+&lt;/pre&gt;
+&lt;p&gt;
+  The final build status will be based on the exist status of the last bash command run
+&lt;/p&gt;
+  </description>
+          <defaultValue>ant -projecthelp # to regular jenkins build log
+cd solr
+mkdir -p jenkins-archive
+ant -projecthelp &gt;jenkins-archive/help.txt
+cd ..
+git diff</defaultValue>
+        </hudson.model.TextParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@2.0.1">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit/>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@3.5.1">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>git@github.com:hossman/solr-jenkins-docker-tester.git</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <gitTool>Default</gitTool>
+    <browser class="hudson.plugins.git.browser.AssemblaWeb">
+      <url/>
+    </browser>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <assignedNode>slave16G1exec || slave32G1exec</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>bash -x build-docker-image.sh
+bash -x run-job.sh</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>workspace/**/jenkins-archive/**</artifacts>
+      <allowEmptyArchive>true</allowEmptyArchive>
+      <onlyIfSuccessful>false</onlyIfSuccessful>
+      <fingerprint>false</fingerprint>
+      <defaultExcludes>false</defaultExcludes>
+      <caseSensitive>true</caseSensitive>
+    </hudson.tasks.ArtifactArchiver>
+    <hudson.tasks.junit.JUnitResultArchiver plugin="junit@1.21">
+      <testResults>**/TEST-*.xml</testResults>
+      <keepLongStdio>false</keepLongStdio>
+      <healthScaleFactor>1.0</healthScaleFactor>
+      <allowEmptyResults>true</allowEmptyResults>
+    </hudson.tasks.junit.JUnitResultArchiver>
+    <hudson.plugins.descriptionsetter.DescriptionSetterPublisher plugin="description-setter@1.10">
+      <regexp>^JOB DESCRIPTION: (.*)</regexp>
+      <regexpForFailed>^JOB DESCRIPTION: (.*)</regexpForFailed>
+      <description>${BUILD_USER_ID}: \1 &lt;br/&gt;&lt;pre&gt;${USER_COMMANDS}&lt;/pre&gt;</description>
+      <descriptionForFailed>${BUILD_USER_ID}: \1 &lt;br/&gt;&lt;pre&gt;${USER_COMMANDS}&lt;/pre&gt;</descriptionForFailed>
+      <setForMatrix>false</setForMatrix>
+    </hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.60">
+      <recipientList>$BUILD_USER_EMAIL</recipientList>
+      <configuredTriggers>
+        <hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+          <email>
+            <subject>$PROJECT_DEFAULT_SUBJECT - FAIL</subject>
+            <body>$PROJECT_DEFAULT_CONTENT</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.RequesterRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern/>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>project</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+        <hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
+          <email>
+            <subject>$PROJECT_DEFAULT_SUBJECT - PASS</subject>
+            <body>$PROJECT_DEFAULT_CONTENT</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.RequesterRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern/>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>project</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
+        <hudson.plugins.emailext.plugins.trigger.AbortedTrigger>
+          <email>
+            <subject>$PROJECT_DEFAULT_SUBJECT - ABORTED</subject>
+            <body>$PROJECT_DEFAULT_CONTENT</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.RequesterRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern/>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>project</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.AbortedTrigger>
+      </configuredTriggers>
+      <contentType>text/plain</contentType>
+      <defaultSubject>$PROJECT_NAME - Build # $BUILD_NUMBER</defaultSubject>
+      <defaultContent>${BUILD_URL}
+
+${FAILED_TESTS,showStack="false",showMessage="false"}
+
+### JDK: ${ENV,var="JDK_TAG"}
+### Git: ${ENV,var="GIT_REF"}
+### Patch: ${ENV,var="CUSTOM_PATCH"}
+### Commands...
+${ENV,var="USER_COMMANDS"}</defaultContent>
+      <attachmentsPattern/>
+      <presendScript>$DEFAULT_PRESEND_SCRIPT</presendScript>
+      <postsendScript>$DEFAULT_POSTSEND_SCRIPT</postsendScript>
+      <attachBuildLog>false</attachBuildLog>
+      <compressBuildLog>false</compressBuildLog>
+      <replyTo>$DEFAULT_REPLYTO</replyTo>
+      <saveOutput>false</saveOutput>
+      <disabled>false</disabled>
+    </hudson.plugins.emailext.ExtendedEmailPublisher>
+  </publishers>
+  <buildWrappers>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter plugin="build-name-setter@1.6.7">
+      <template>#${BUILD_NUMBER} - ${BUILD_USER_ID}</template>
+      <runAtStart>true</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+    <org.jenkinsci.plugins.builduser.BuildUser plugin="build-user-vars-plugin@1.5"/>
+  </buildWrappers>
+</project>
